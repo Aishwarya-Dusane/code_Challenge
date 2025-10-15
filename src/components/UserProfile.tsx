@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Typography, Switch } from 'antd';
-import Icon from '@ant-design/icons'
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
-
+import { MESSAGES } from "./constants/messages";
 // Styles
 const popoverContainerStyle: React.CSSProperties = {
   minWidth: 280,
@@ -47,7 +46,7 @@ const themeSwitchStyle: React.CSSProperties = {
 interface UserProfileProps {
   onLogout: () => void;
   onThemeToggle?: () => void;
-  theme?: 'dark' | 'light';
+  theme?: MESSAGES.DARK | MESSAGES.LIGHT;
 }
 
 interface UserPopoverProps {
@@ -55,7 +54,7 @@ interface UserPopoverProps {
   onLogout: () => void;
   onCancel: () => void;
   onThemeToggle?: () => void;
-  theme?: 'dark' | 'light';
+  theme?: MESSAGES.DARK | MESSAGES.LIGHT;
 }
 
 // Update the component signature:
@@ -104,12 +103,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ onLogout, onThemeToggle, them
           <Switch
             checkedChildren={<CheckOutlined />}
             unCheckedChildren={<CloseOutlined />}
-            checked={theme === 'dark'}
+            checked={theme === MESSAGES.DARK}
             onChange={onThemeToggle}
             defaultChecked
           />
           <span style={{ marginLeft: 8, color: '#b0b4c1', fontSize: 14 }}>
-            {theme === 'dark' ? 'Light' : 'Dark'} Theme
+            {theme === MESSAGES.DARK ? MESSAGES.LIGHT : MESSAGES.DARK} Theme
           </span>
         </div>
       )}
