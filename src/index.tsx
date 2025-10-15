@@ -10,7 +10,7 @@ import LoginComponent from './components/LoginComponent';
 import UserProfile from './components/UserProfile';
 import { panelList } from './panelList';
 import '../styles/theme.less';
-
+import { MESSAGES } from "./components/constants/messages";
 /**
  * Represents an open panel's state and position.
  */
@@ -71,23 +71,21 @@ const NAV_BAR_HEIGHT = 56; // px, must match your nav bar minHeight
  * Checks if the user is logged in.
  * @returns {boolean}
  */
-const isLoggedIn = () => localStorage.getItem('isLoggedIn') === 'true';
+const isLoggedIn = () => localStorage.getItem(MESSAGES.ISlOGGEDIN) === 'true';
 
 const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
 
-const THEME_KEY = 'theme'; // localStorage key
-
 /**
  * Gets the initial theme from localStorage or prompts the user.
- * @returns {'dark' | 'light'}
+ * @returns {MESSAGES.DARK | MESSAGES.LIGHT}
  */
 const getInitialTheme = () => {
-  const stored = localStorage.getItem(THEME_KEY);
-  if (stored === 'dark' || stored === 'light') return stored;
+  const stored = localStorage.getItem(MESSAGES.THEME_KEY);
+  if (stored === MESSAGES.DARK || stored === MESSAGES.LIGHT) return stored;
   // Ask user if not set
-  const userPref = window.confirm('Use dark theme? Click OK for dark, Cancel for light.');
-  const theme = userPref ? 'dark' : 'light';
-  localStorage.setItem(THEME_KEY, theme);
+  const userPref = window.confirm(MESSAGES.CONFIRM_DARK_THEME);
+  const theme = userPref ? MESSAGES.DARK : MESSAGES.LIGHT;
+  localStorage.setItem(MESSAGES.THEME_KEY, theme);
   return theme;
 };
 
@@ -100,7 +98,7 @@ const App: FC = () => {
   const [navOpen, setNavOpen] = useState<boolean>(false);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [dropCell, setDropCell] = useState<{ row: number; col: number } | null>(null);
-  const [theme, setTheme] = useState<'dark' | 'light'>(getInitialTheme());
+  const [theme, setTheme] = useState<MESSAGES.DARK | MESSAGES.LIGHT>(getInitialTheme());
   const [nextZIndex, setNextZIndex] = useState(1000); // <-- Add this line
 
   // Drag from nav: set key in dataTransfer
@@ -121,8 +119,7 @@ const App: FC = () => {
     setContainerSize(info.size);
   };
 
-  console.log("containerSize---",containerSize)
-  /**
+   /**
    * Handles drop event on the main workspace to open a new panel.
    */
   const onMainDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -220,8 +217,8 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
     const resetTimer = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
-        localStorage.removeItem('isLoggedIn');
-        window.dispatchEvent(new Event('login-success'));
+        localStorage.removeItem(MESSAGES.ISlOGGEDIN);
+        window.dispatchEvent(new Event(MESSAGES.lOGIN_SUCCESS));
       }, INACTIVITY_LIMIT);
     };
 
@@ -241,7 +238,7 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
 
   // Set theme class on body or root
   useEffect(() => {
-    document.body.classList.remove('theme-dark', 'theme-light');
+    document.body.classList.remove(MESSAGES.THEME_DARK, MESSAGES.THEME_LIGHT);
     document.body.classList.add(`theme-${theme}`);
   }, [theme]);
 
@@ -250,8 +247,8 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
    */
   const handleThemeToggle = () => {
     setTheme(prev => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      localStorage.setItem(THEME_KEY, next);
+      const next = prev === MESSAGES.DARK ? MESSAGES.LIGHT : MESSAGES.DARK;
+      localStorage.setItem(MESSAGES.THEME_KEY, next);
       return next;
     });
   };
@@ -319,11 +316,11 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
                 title={panel.title}
               >
                 <span style={{ marginBottom: 4 }}>
-                  {panel.key === 'fruitbook' ? (
+                  {panel.key === MESSAGES.FRUIT_BOOK ? (
                     <TermsIcon />
-                  ) : panel.key === 'fruitview' ? (
+                  ) : panel.key === MESSAGES.FRUIT_VIEW ? (
                     <FruitViewIcon />
-                  ) : panel.key === 'about' ? (
+                  ) : panel.key === MESSAGES.ABOUT ? (
                     <AboutIcon />
                   ) : null}
                 </span>
@@ -436,8 +433,8 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
             <div style={{ marginRight: 32 }}>
               <UserProfile
                 onLogout={() => {
-                  localStorage.removeItem('isLoggedIn');
-                  window.dispatchEvent(new Event('login-success'));
+                  localStorage.removeItem(MESSAGES.ISlOGGEDIN);
+                  window.dispatchEvent(new Event(MESSAGES.lOGIN_SUCCESS));
                 }}
                 onThemeToggle={handleThemeToggle}
                 theme={theme}
@@ -478,8 +475,8 @@ const Root: React.FC = () => {
   useEffect(() => {
     // Listen for login event from LoginComponent
     const handler = () => setLoggedIn(isLoggedIn());
-    window.addEventListener('login-success', handler);
-    return () => window.removeEventListener('login-success', handler);
+    window.addEventListener(MESSAGES.lOGIN_SUCCESS, handler);
+    return () => window.removeEventListener(MESSAGES.lOGIN_SUCCESS, handler);
   }, []);
 
   if (!loggedIn) {
@@ -496,8 +493,8 @@ const origLoginComponent = LoginComponent;
   return React.createElement(origLoginComponent, {
     ...props,
     onLoginSuccess: () => {
-      localStorage.setItem('isLoggedIn', 'true');
-      window.dispatchEvent(new Event('login-success'));
+      localStorage.setItem(MESSAGES.ISlOGGEDIN, 'true');
+      window.dispatchEvent(new Event(MESSAGES.lOGIN_SUCCESS));
       forceUpdate();
     }
   });
