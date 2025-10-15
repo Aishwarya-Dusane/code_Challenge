@@ -30,6 +30,7 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
   return (
     <div
       id="login-component"
+      data-testid="login-component"
       style={{
         minHeight: '100vh',
         display: 'flex',
