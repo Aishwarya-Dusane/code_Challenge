@@ -1,15 +1,22 @@
-import 'antd/dist/reset.css';
-import React, { useState, DragEvent, FC, StrictMode, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
-import ResizableDraggablePanel from './components/ResizableDraggablePanel';
-import TermsIcon from './Icons/TermsIcon';
-import AboutIcon from './Icons/AboutIcon';
-import FruitViewIcon from './Icons/FruitViewIcon';
-import { MainWorkspace } from './components/MainWorkspace';
-import LoginComponent from './components/LoginComponent';
-import UserProfile from './components/UserProfile';
-import { panelList } from './panelList';
-import '../styles/theme.less';
+import "antd/dist/reset.css";
+import React, {
+  useState,
+  DragEvent,
+  FC,
+  StrictMode,
+  useEffect,
+  useRef,
+} from "react";
+import ReactDOM from "react-dom";
+import ResizableDraggablePanel from "./components/ResizableDraggablePanel";
+import TermsIcon from "./Icons/TermsIcon";
+import AboutIcon from "./Icons/AboutIcon";
+import FruitViewIcon from "./Icons/FruitViewIcon";
+import { MainWorkspace } from "./components/MainWorkspace";
+import LoginComponent from "./components/LoginComponent";
+import UserProfile from "./components/UserProfile";
+import { panelList } from "./panelList";
+import "../styles/theme.less";
 import { MESSAGES } from "./components/constants/messages";
 /**
  * Represents an open panel's state and position.
@@ -23,7 +30,7 @@ type OpenPanel = {
   y: number;
   width: number;
   height: number;
-  zIndex: number; 
+  zIndex: number;
 };
 
 /**
@@ -33,8 +40,8 @@ type OpenPanel = {
 const getDefaultPanelPosition = (count: number) => ({
   x: 60 + count * 40,
   y: 60 + count * 40,
-  width: 700,  
-  height: 420, 
+  width: 700,
+  height: 420,
 });
 
 const GRID_ROWS = 2;
@@ -71,7 +78,7 @@ const NAV_BAR_HEIGHT = 56; // px, must match your nav bar minHeight
  * Checks if the user is logged in.
  * @returns {boolean}
  */
-const isLoggedIn = () => localStorage.getItem(MESSAGES.ISlOGGEDIN) === 'true';
+const isLoggedIn = () => localStorage.getItem(MESSAGES.ISlOGGEDIN) === "true";
 
 const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
 
@@ -97,8 +104,12 @@ const App: FC = () => {
   const [dragNavPanelKey, setDragNavPanelKey] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState<boolean>(false);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const [dropCell, setDropCell] = useState<{ row: number; col: number } | null>(null);
-  const [theme, setTheme] = useState<MESSAGES.DARK | MESSAGES.LIGHT>(getInitialTheme());
+  const [dropCell, setDropCell] = useState<{ row: number; col: number } | null>(
+    null
+  );
+  const [theme, setTheme] = useState<MESSAGES.DARK | MESSAGES.LIGHT>(
+    getInitialTheme()
+  );
   const [nextZIndex, setNextZIndex] = useState(1000); // <-- Add this line
 
   // Drag from nav: set key in dataTransfer
@@ -108,28 +119,34 @@ const App: FC = () => {
    */
   const onNavDragStart = (key: string) => (e: DragEvent<HTMLLIElement>) => {
     setDragNavPanelKey(key);
-    e.dataTransfer.setData('panelKey', key);
+    e.dataTransfer.setData("panelKey", key);
   };
 
   /**
    * Called by MainWorkspace to update container size and drop cell.
    */
-  const handleGridDropInfo = (info: { cell: { row: number; col: number } | null, size: { width: number; height: number } }) => {
+  const handleGridDropInfo = (info: {
+    cell: { row: number; col: number } | null;
+    size: { width: number; height: number };
+  }) => {
     setDropCell(info.cell);
     setContainerSize(info.size);
   };
 
-   /**
+  /**
    * Handles drop event on the main workspace to open a new panel.
    */
   const onMainDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const key = e.dataTransfer.getData('panelKey');
+    const key = e.dataTransfer.getData("panelKey");
     if (!key) return;
-    const panelDef = panelList.find(p => p.key === key);
+    const panelDef = panelList.find((p) => p.key === key);
     if (!panelDef) return;
     const id = `${key}-${Date.now()}`;
-    let x = 60, y = NAV_BAR_HEIGHT + 10, width = 700, height = 420;
+    let x = 60,
+      y = NAV_BAR_HEIGHT + 10,
+      width = 700,
+      height = 420;
     if (dropCell && containerSize.width && containerSize.height) {
       // Subtract nav bar height from available height for grid
       const availableHeight = containerSize.height - NAV_BAR_HEIGHT;
@@ -174,37 +191,41 @@ const App: FC = () => {
    * Closes a panel by id.
    */
   const handleClose = (id: string) => {
-    setOpenPanels(openPanels.filter(p => p.id !== id));
+    setOpenPanels(openPanels.filter((p) => p.id !== id));
   };
 
   /**
    * Moves a panel by delta x and y.
    */
-const handlePanelMove = (id: string, dx: number, dy: number) => {
-  setOpenPanels(panels =>
-    panels.map(p => {
-      if (p.id !== id) return p;
+  const handlePanelMove = (id: string, dx: number, dy: number) => {
+    setOpenPanels((panels) =>
+      panels.map((p) => {
+        if (p.id !== id) return p;
 
-      // Clamp the new position within container bounds
-      const maxX = containerSize.width - p.width;
-      const maxY = containerSize.height - p.height;
+        // Clamp the new position within container bounds
+        const maxX = containerSize.width - p.width;
+        const maxY = containerSize.height - p.height;
 
-      const newX = Math.min(Math.max(p.x + dx, 0), maxX > 0 ? maxX : 0);
-      const newY = Math.min(Math.max(p.y + dy, 0), maxY > 0 ? maxY : 0);
+        const newX = Math.min(Math.max(p.x + dx, 0), maxX > 0 ? maxX : 0);
+        const newY = Math.min(Math.max(p.y + dy, 0), maxY > 0 ? maxY : 0);
 
-      return { ...p, x: newX, y: newY };
-    })
-  );
-};
+        return { ...p, x: newX, y: newY };
+      })
+    );
+  };
 
   /**
    * Resizes a panel by delta width and height.
    */
   const handlePanelResize = (id: string, dw: number, dh: number) => {
-    setOpenPanels(panels =>
-      panels.map(p =>
+    setOpenPanels((panels) =>
+      panels.map((p) =>
         p.id === id
-          ? { ...p, width: Math.max(200, p.width + dw), height: Math.max(100, p.height + dh) }
+          ? {
+              ...p,
+              width: Math.max(200, p.width + dw),
+              height: Math.max(100, p.height + dh),
+            }
           : p
       )
     );
@@ -222,15 +243,15 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
       }, INACTIVITY_LIMIT);
     };
 
-    const activityEvents = ['mousemove', 'keydown', 'mousedown', 'touchstart'];
-    activityEvents.forEach(event =>
+    const activityEvents = ["mousemove", "keydown", "mousedown", "touchstart"];
+    activityEvents.forEach((event) =>
       window.addEventListener(event, resetTimer)
     );
     resetTimer();
 
     return () => {
       if (timer) clearTimeout(timer);
-      activityEvents.forEach(event =>
+      activityEvents.forEach((event) =>
         window.removeEventListener(event, resetTimer)
       );
     };
@@ -246,68 +267,72 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
    * Toggles the application theme between dark and light.
    */
   const handleThemeToggle = () => {
-    setTheme(prev => {
+    setTheme((prev) => {
       const next = prev === MESSAGES.DARK ? MESSAGES.LIGHT : MESSAGES.DARK;
       localStorage.setItem(MESSAGES.THEME_KEY, next);
       return next;
     });
   };
   const handlePanelFocus = (id: string) => {
-    setOpenPanels(panels =>
-      panels.map(panel =>
-        panel.id === id
-          ? { ...panel, zIndex: nextZIndex }
-          : panel
+    setOpenPanels((panels) =>
+      panels.map((panel) =>
+        panel.id === id ? { ...panel, zIndex: nextZIndex } : panel
       )
     );
-    setNextZIndex(z => z + 1);
+    setNextZIndex((z) => z + 1);
   };
 
   return (
-    <div className={`app-root theme-${theme}`} style={{ display: 'flex', height: '100vh' }}>
+    <div
+      className={`app-root theme-${theme}`}
+      style={{ display: "flex", height: "100vh" }}
+    >
       {/* Navigation Bar */}
       {navOpen && (
         <nav
           style={{
             width: 90, // Increased width
-            background: '#232b3e',
-            padding: '0.5rem 0.25rem',
-            borderRight: '1px solid #3e4a6b',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+            background: "#232b3e",
+            padding: "0.5rem 0.25rem",
+            borderRight: "1px solid #3e4a6b",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
             minWidth: 90, // Increased minWidth
-            boxSizing: 'border-box',
+            boxSizing: "border-box",
           }}
         >
-          <ul style={{
-            listStyle: 'none',
-            padding: 0,
-            margin: 0,
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}>
+          <ul
+            style={{
+              listStyle: "none",
+              padding: 0,
+              margin: 0,
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
             {panelList.map((panel) => (
               <li
                 key={panel.key}
                 style={{
                   marginBottom: 16,
-                  cursor: 'grab',
-                  fontWeight: 'normal',
-                  background: dragNavPanelKey === panel.key ? '#353b4a' : undefined,
+                  cursor: "grab",
+                  fontWeight: "normal",
+                  background:
+                    dragNavPanelKey === panel.key ? "#353b4a" : undefined,
                   padding: 8,
                   borderRadius: 10,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
                   fontSize: 13,
-                  color: '#e0e0e0',
-                  width: '100%',
-                  transition: 'background 0.2s',
-                  textAlign: 'center', // Center text
+                  color: "#e0e0e0",
+                  width: "100%",
+                  transition: "background 0.2s",
+                  textAlign: "center", // Center text
                   minHeight: 64,
                 }}
                 draggable
@@ -324,14 +349,16 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
                     <AboutIcon />
                   ) : null}
                 </span>
-                <span style={{
-                  width: '100%',
-                  textAlign: 'center', // Center text
-                  fontSize: 13,
-                  fontWeight: 500,
-                  lineHeight: 1.2,
-                  wordBreak: 'break-word',
-                }}>
+                <span
+                  style={{
+                    width: "100%",
+                    textAlign: "center", // Center text
+                    fontSize: 13,
+                    fontWeight: 500,
+                    lineHeight: 1.2,
+                    wordBreak: "break-word",
+                  }}
+                >
                   {panel.title}
                 </span>
               </li>
@@ -342,7 +369,7 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
 
       {/* Panel Area */}
       <MainWorkspace
-                onDrop={onMainDrop}
+        onDrop={onMainDrop}
         onDragOver={onMainDragOver}
         onGridDropInfo={handleGridDropInfo}
         gridRows={GRID_ROWS}
@@ -351,58 +378,74 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
         <main
           style={{
             flex: 1,
-            position: 'relative',
-            overflow: 'hidden',
-            height: '100%',
-            width: '100%',
+            position: "relative",
+            overflow: "hidden",
+            height: "100%",
+            width: "100%",
           }}
         >
           {/* Top nav branding */}
           <div
             style={{
-              width: '100%',
-        
-              padding: '0.5rem 1.5rem',
+              width: "100%",
+
+              padding: "0.5rem 1.5rem",
               fontWeight: 600,
               fontSize: 20,
               letterSpacing: 1,
-              position: 'sticky',
+              position: "sticky",
               top: 0,
               zIndex: 2000,
-              display: 'flex',
-              alignItems: 'center',
-              boxShadow: '0 2px 8px #0002',
+              display: "flex",
+              alignItems: "center",
+              boxShadow: "0 2px 8px #0002",
               minHeight: NAV_BAR_HEIGHT,
-              borderBottom: '1px solid #3e4a6b',
+              borderBottom: "1px solid #3e4a6b",
             }}
           >
             {/* Hamburger/X icon */}
             <button
               onClick={() => setNavOpen((v) => !v)}
               style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#fff',
+                background: "transparent",
+                border: "none",
+                color: "#fff",
                 fontSize: 26,
-                cursor: 'pointer',
+                cursor: "pointer",
                 marginRight: 20,
-                display: 'flex',
-                alignItems: 'center',
+                display: "flex",
+                alignItems: "center",
                 padding: 0,
                 height: 40,
                 width: 40,
                 borderRadius: 8,
-                transition: 'background 0.2s',
-                boxShadow: navOpen ? '0 2px 8px #0002' : undefined,
+                transition: "background 0.2s",
+                boxShadow: navOpen ? "0 2px 8px #0002" : undefined,
               }}
               aria-label="Toggle navigation"
             >
-              <span style={{ display: 'inline-block', width: 28, height: 28 }}>
+              <span style={{ display: "inline-block", width: 28, height: 28 }}>
                 {navOpen ? (
                   // X icon
                   <svg width="28" height="28" viewBox="0 0 28 28">
-                    <line x1="7" y1="7" x2="21" y2="21" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
-                    <line x1="21" y1="7" x2="7" y2="21" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+                    <line
+                      x1="7"
+                      y1="7"
+                      x2="21"
+                      y2="21"
+                      stroke="#fff"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                    <line
+                      x1="21"
+                      y1="7"
+                      x2="7"
+                      y2="21"
+                      stroke="#fff"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 ) : (
                   // Hamburger icon
@@ -415,16 +458,18 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
               </span>
             </button>
             {/* App title */}
-            <span style={{
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              fontSize: 22,
-              letterSpacing: 2,
-              color: '#fff',
-              textShadow: '0 1px 2px #0006',
-              userSelect: 'none',
-              textTransform: 'uppercase',
-            }}>
+            <span
+              style={{
+                fontFamily: "monospace",
+                fontWeight: 700,
+                fontSize: 22,
+                letterSpacing: 2,
+                color: "#fff",
+                textShadow: "0 1px 2px #0006",
+                userSelect: "none",
+                textTransform: "uppercase",
+              }}
+            >
               fruteria
             </span>
             {/* Spacer to push UserProfile to the right */}
@@ -442,8 +487,11 @@ const handlePanelMove = (id: string, dx: number, dy: number) => {
             </div>
           </div>
           {openPanels.length === 0 ? (
-            <div style={{ color: '#888', textAlign: 'center', marginTop: '2rem' }}>
-              No panels open.<br />
+            <div
+              style={{ color: "#888", textAlign: "center", marginTop: "2rem" }}
+            >
+              No panels open.
+              <br />
               Drag one from the navigation bar.
             </div>
           ) : (
@@ -489,14 +537,14 @@ const Root: React.FC = () => {
 // (You can move this logic inside LoginComponent if you prefer)
 const origLoginComponent = LoginComponent;
 (LoginComponent as any) = (props: any) => {
-  const [_, forceUpdate] = React.useReducer(x => x + 1, 0);
+  const [_, forceUpdate] = React.useReducer((x) => x + 1, 0);
   return React.createElement(origLoginComponent, {
     ...props,
     onLoginSuccess: () => {
-      localStorage.setItem(MESSAGES.ISlOGGEDIN, 'true');
+      localStorage.setItem(MESSAGES.ISlOGGEDIN, "true");
       window.dispatchEvent(new Event(MESSAGES.lOGIN_SUCCESS));
       forceUpdate();
-    }
+    },
   });
 };
 
@@ -504,5 +552,5 @@ ReactDOM.render(
   <StrictMode>
     <Root />
   </StrictMode>,
-  document.getElementById('root')
+  document.getElementById("root")
 );

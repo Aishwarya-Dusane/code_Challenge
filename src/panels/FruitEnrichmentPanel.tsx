@@ -107,16 +107,16 @@ const FruitEnrichmentPanel: React.FC<FruitEnrichmentPanelProps> = ({ fruit, onCl
       id={`fruit-enrichment-${fruit.id}`}
       title={`${fruit.name} Enrichment`}
       content={
-        <div style={{ height: '100%', width: '100%',  background: 'Pink' }}>
+        <div style={{ height: '100%', width: '100%' }}>
           <div
             className="ag-theme-alpine"
             style={{
               height: panelState.height - 40,
               width: '100%',
-              background: 'Pink',
+              background: '#20263a',
               borderRadius: 10,
               fontSize: 15,
-              color: '#f1f5e0ff',
+              color: '#e0e6f5',
             }}
           >
             <AgGridReact

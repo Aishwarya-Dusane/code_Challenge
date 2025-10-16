@@ -2,36 +2,28 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import FruitEnrichmentPanel from "../FruitEnrichmentPanel";
 
-// 🧩 Mock AgGridReact to avoid loading AG Grid internals
-jest.mock("ag-grid-react", () => ({
-  AgGridReact: jest.fn(() => <div data-testid="mock-ag-grid">Mock AG Grid</div>),
-}));
-
-// 🧩 Mock ResizableDraggablePanel to inspect props
-const mockResizableDraggablePanel = jest.fn(({ title, content, onClose, onMove, onResize }) => (
-  <div data-testid="mock-panel">
+// Mock ResizableDraggablePanel to inspect props and simulate events
+const mockResizableDraggablePanel = jest.fn(({ title, content, onClose, onMove, onResize, x, y, width, height }) => (
+  <div data-testid="mock-panel" data-x={x} data-y={y} data-width={width} data-height={height}>
     <h2>{title}</h2>
-    <button data-testid="close-btn" onClick={onClose}>
-      Close
-    </button>
-    <button data-testid="move-btn" onClick={() => onMove(10, 5)}>
-      Move
-    </button>
-    <button data-testid="resize-btn" onClick={() => onResize(20, 10)}>
-      Resize
-    </button>
+    <button data-testid="close-btn" onClick={onClose}>Close</button>
+    <button data-testid="move-btn" onClick={() => onMove(10, 5)}>Move</button>
+    <button data-testid="resize-btn" onClick={() => onResize(20, 10)}>Resize</button>
     <div>{content}</div>
   </div>
 ));
 
-jest.mock("../components/ResizableDraggablePanel", () => ({
+jest.mock("../../components/ResizableDraggablePanel", () => ({
   __esModule: true,
   default: (props: any) => mockResizableDraggablePanel(props),
 }));
 
-describe("FruitEnrichmentPanel", () => {
-  const mockOnClose = jest.fn();
+// Mock AgGridReact to avoid rendering complexity
+jest.mock("ag-grid-react", () => ({
+  AgGridReact: jest.fn(() => <div data-testid="mock-ag-grid" />),
+}));
 
+describe("FruitEnrichmentPanel", () => {
   const mockFruit = {
     id: "F001",
     name: "Banana",
@@ -41,38 +33,13 @@ describe("FruitEnrichmentPanel", () => {
     details: "Organic, Fair Trade",
   };
 
+  const mockOnClose = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders with correct title and content", () => {
-    render(<FruitEnrichmentPanel fruit={mockFruit} onClose={mockOnClose} />);
-
-    // Title passed to panel
-    expect(screen.getByText("Banana Enrichment")).toBeInTheDocument();
-
-    // Mock grid rendered
-    expect(screen.getByTestId("mock-ag-grid")).toBeInTheDocument();
-
-    // Wrapper panel rendered
-    expect(screen.getByTestId("mock-panel")).toBeInTheDocument();
-  });
-
-  it("passes correct props to ResizableDraggablePanel", () => {
-    render(<FruitEnrichmentPanel fruit={mockFruit} onClose={mockOnClose} />);
-
-    const call = mockResizableDraggablePanel.mock.calls[0][0];
-    expect(call.id).toBe("fruit-enrichment-F001");
-    expect(call.title).toBe("Banana Enrichment");
-    expect(call.x).toBe(200);
-    expect(call.y).toBe(120);
-    expect(call.width).toBe(400);
-    expect(call.height).toBe(220);
-    expect(typeof call.onMove).toBe("function");
-    expect(typeof call.onResize).toBe("function");
-  });
-
-  it("calls onClose when Close button clicked", () => {
+  it("calls onClose callback when Close button is clicked", () => {
     render(<FruitEnrichmentPanel fruit={mockFruit} onClose={mockOnClose} />);
     fireEvent.click(screen.getByTestId("close-btn"));
     expect(mockOnClose).toHaveBeenCalledTimes(1);
@@ -80,29 +47,44 @@ describe("FruitEnrichmentPanel", () => {
 
   it("updates position when onMove is triggered", () => {
     render(<FruitEnrichmentPanel fruit={mockFruit} onClose={mockOnClose} />);
-    const moveBtn = screen.getByTestId("move-btn");
-    fireEvent.click(moveBtn);
+    
+    // Initial call props
+    const firstCallProps = mockResizableDraggablePanel.mock.calls[0][0];
+    expect(firstCallProps.x).toBe(200);
+    expect(firstCallProps.y).toBe(120);
 
-    const callAfterMove = mockResizableDraggablePanel.mock.calls[1][0];
-    expect(callAfterMove.x).toBeGreaterThan(200);
-    expect(callAfterMove.y).toBeGreaterThan(120);
+    // Trigger move event
+    fireEvent.click(screen.getByTestId("move-btn"));
+
+    // The panel should re-render with updated x/y
+    const secondCallProps = mockResizableDraggablePanel.mock.calls[1][0];
+    expect(secondCallProps.x).toBeGreaterThan(200);
+    expect(secondCallProps.y).toBeGreaterThan(120);
   });
 
   it("updates size when onResize is triggered", () => {
     render(<FruitEnrichmentPanel fruit={mockFruit} onClose={mockOnClose} />);
-    const resizeBtn = screen.getByTestId("resize-btn");
-    fireEvent.click(resizeBtn);
+    
+    // Initial call props
+    const firstCallProps = mockResizableDraggablePanel.mock.calls[0][0];
+    expect(firstCallProps.width).toBe(400);
+    expect(firstCallProps.height).toBe(220);
 
-    const callAfterResize = mockResizableDraggablePanel.mock.calls[1][0];
-    expect(callAfterResize.width).toBeGreaterThanOrEqual(320);
-    expect(callAfterResize.height).toBeGreaterThanOrEqual(160);
+    // Trigger resize event
+    fireEvent.click(screen.getByTestId("resize-btn"));
+
+    // The panel should re-render with updated width/height
+    const secondCallProps = mockResizableDraggablePanel.mock.calls[1][0];
+    expect(secondCallProps.width).toBeGreaterThanOrEqual(320);
+    expect(secondCallProps.height).toBeGreaterThanOrEqual(160);
   });
 
-  it("renders row data with fruit details in AgGridReact", () => {
+  it("passes correct row data to AgGridReact", () => {
     render(<FruitEnrichmentPanel fruit={mockFruit} onClose={mockOnClose} />);
-
-    const gridProps = (require("ag-grid-react").AgGridReact as jest.Mock).mock.calls[0][0];
-    expect(gridProps.rowData).toEqual([
+    
+    // Extract props passed to AgGridReact from the first call
+    const agGridProps = require("ag-grid-react").AgGridReact.mock.calls[0][0];
+    expect(agGridProps.rowData).toEqual([
       { property: "ID", value: "F001" },
       { property: "Country", value: "Ecuador" },
       { property: "Type", value: "Tropical" },

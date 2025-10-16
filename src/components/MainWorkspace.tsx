@@ -8,7 +8,6 @@ interface MainWorkspaceProps {
   onGridDropInfo?: (info: { cell: { row: number; col: number } | null; size: { width: number; height: number } }) => void;
   gridRows?: number;
   gridCols?: number;
-  ref?: DOMRect;
 }
 
 export const MainWorkspace: React.FC<MainWorkspaceProps> = ({
@@ -18,7 +17,6 @@ export const MainWorkspace: React.FC<MainWorkspaceProps> = ({
   onGridDropInfo,
   gridRows = 2,
   gridCols = 2,
-  ref
 }) => {
   const [dragging, setDragging] = useState(false);
   const [activeCell, setActiveCell] = useState<{ row: number; col: number } | null>(null);
