@@ -1,4 +1,4 @@
-export const MESSAGES = {
+const MESSAGES = {
   NO_ENRICHMENT_DATA: "No enrichment data available.",
   CONFIRM_DARK_THEME: "Use dark theme? Click OK for dark, Cancel for light.",
   DARK:"dark",
@@ -12,3 +12,5 @@ export const MESSAGES = {
   FRUIT_VIEW: "fruitview",
   ABOUT: "about"
 };
+
+module.exports = { MESSAGES };

@@ -69,8 +69,7 @@ export const FruitViewPanel: React.FC = () => {
                 <Option key={fruit} value={fruit}>{fruit}</Option>
               ))}
             </Select>
- 
-          </Form.Item>
+            </Form.Item>
           <Form.Item label="Amount">
             <InputNumber
               min={1}

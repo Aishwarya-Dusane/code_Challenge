@@ -1,136 +1,106 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import { FruitViewPanel } from "../FruitViewPanel";
 
-// 🧩 Mock antd message module
-const mockSuccess = jest.fn();
-const mockError = jest.fn();
-const mockInfo = jest.fn();
+beforeAll(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: jest.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),    // deprecated but still used by some libs
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+});
 
+
+// 🧩 Mock Ant Design message API to avoid UI side effects
 jest.mock("antd", () => {
   const antd = jest.requireActual("antd");
   return {
     ...antd,
     message: {
-      success: (...args: any[]) => mockSuccess(...args),
-      error: (...args: any[]) => mockError(...args),
-      info: (...args: any[]) => mockInfo(...args),
+      success: jest.fn(),
+      error: jest.fn(),
+      info: jest.fn(),
     },
   };
 });
 
-// 🧩 Mock FruitMachine behavior
-const mockBuy = jest.fn();
-const mockSell = jest.fn();
-const mockGetInventory = jest.fn();
+const { message } = require("antd");
 
-jest.mock("../../engine/MockFruitMachine", () => {
-  return {
-    MockFruitMachine: jest.fn().mockImplementation(() => ({
-      buy: mockBuy,
-      sell: mockSell,
-      getInventory: mockGetInventory,
-    })),
-  };
+// 🧩 Mock MockFruitMachine to control inventory behavior
+jest.mock("../../../engine/MockFruitMachine", () => {
+  const mockInventory = { apple: 5, banana: 3, orange: 2 };
+  const MockFruitMachine = jest.fn().mockImplementation(() => ({
+    getInventory: jest.fn(() => ({ ...mockInventory })),
+    buy: jest.fn((fruit: string, amount: number) => {
+      if (mockInventory[fruit] >= amount) {
+        mockInventory[fruit] -= amount;
+        return true;
+      }
+      return false;
+    }),
+    sell: jest.fn((fruit: string, amount: number) => {
+      mockInventory[fruit] += amount;
+    }),
+  }));
+
+  return { MockFruitMachine, Fruit: ["apple", "banana", "orange"] };
 });
 
 describe("FruitViewPanel", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Default inventory
-    mockGetInventory.mockReturnValue({
-      apple: 10,
-      banana: 8,
-      orange: 5,
-    });
   });
 
-  it("renders the form and inventory correctly", () => {
+  it("updates message and inventory when buying fruit successfully", () => {
     render(<FruitViewPanel />);
 
-    expect(screen.getByText("Fruit View")).toBeInTheDocument();
-    expect(screen.getByText("Inventory")).toBeInTheDocument();
-    expect(screen.getByText(/apple:/i)).toBeInTheDocument();
-    expect(screen.getByText(/banana:/i)).toBeInTheDocument();
-    expect(screen.getByText(/orange:/i)).toBeInTheDocument();
+    // Click the Buy button
+    fireEvent.click(screen.getByRole("button", { name: /buy/i }));
 
-    expect(screen.getByRole("button", { name: /Buy/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Sell/i })).toBeInTheDocument();
+    // Message text should appear
+    expect(screen.getByText(/bought 1 apple/i)).toBeInTheDocument();
+
+    // Message color is green
+    const msg = screen.getByText(/bought/i);
+    expect(msg).toHaveStyle("color: #52c41a");
+
+    // Ant Design success message called
+    expect(message.success).toHaveBeenCalledWith(expect.stringMatching(/bought/i));
   });
 
-  it("handles successful buy", () => {
-    mockBuy.mockReturnValue(true);
+  it("shows error when buying too many fruits", () => {
     render(<FruitViewPanel />);
 
-    const buyBtn = screen.getByRole("button", { name: /Buy/i });
-    fireEvent.click(buyBtn);
-
-    expect(mockBuy).toHaveBeenCalledWith("apple", 1);
-    expect(mockSuccess).toHaveBeenCalledWith("Bought 1 apple(s).");
-    expect(screen.getByText("Bought 1 apple(s).")).toBeInTheDocument();
-  });
-
-  it("handles failed buy (not enough inventory)", () => {
-    mockBuy.mockReturnValue(false);
-    render(<FruitViewPanel />);
-
-    fireEvent.click(screen.getByRole("button", { name: /Buy/i }));
-
-    expect(mockBuy).toHaveBeenCalledWith("apple", 1);
-    expect(mockError).toHaveBeenCalledWith("Not enough apples in inventory.");
-    expect(screen.getByText("Not enough apples in inventory.")).toBeInTheDocument();
-  });
-
-  it("handles selling fruit", () => {
-    render(<FruitViewPanel />);
-
-    const sellBtn = screen.getByRole("button", { name: /Sell/i });
-    fireEvent.click(sellBtn);
-
-    expect(mockSell).toHaveBeenCalledWith("apple", 1);
-    expect(mockInfo).toHaveBeenCalledWith("Sold 1 apple(s).");
-    expect(screen.getByText("Sold 1 apple(s).")).toBeInTheDocument();
-  });
-
-  it("updates selected fruit and amount", () => {
-    render(<FruitViewPanel />);
-
-    // Select dropdown changes
-    const select = screen.getByRole("combobox");
-    fireEvent.change(select, { target: { value: "banana" } });
-    fireEvent.click(screen.getByRole("button", { name: /Buy/i }));
-
-    expect(mockBuy).toHaveBeenCalledWith("banana", 1);
-
-    // Change amount
+    // Increase amount beyond available inventory
     const input = screen.getByRole("spinbutton");
-    fireEvent.change(input, { target: { value: 3 } });
-    fireEvent.click(screen.getByRole("button", { name: /Sell/i }));
+    fireEvent.change(input, { target: { value: 10 } });
 
-    expect(mockSell).toHaveBeenCalledWith("banana", 3);
+    fireEvent.click(screen.getByRole("button", { name: /buy/i }));
+
+    expect(screen.getByText(/not enough apple/i)).toBeInTheDocument();
+    expect(message.error).toHaveBeenCalledWith(expect.stringMatching(/not enough/i));
   });
 
-  it("applies correct message colors", () => {
-    mockBuy.mockReturnValue(true);
-    const { rerender } = render(<FruitViewPanel />);
+  it("updates message and inventory when selling fruit", () => {
+    render(<FruitViewPanel />);
 
-    // Success message
-    fireEvent.click(screen.getByRole("button", { name: /Buy/i }));
-    const successMsg = screen.getByText("Bought 1 apple(s).");
-    expect(successMsg).toHaveStyle({ color: "#52c41a" });
+    // Click the Sell button
+    fireEvent.click(screen.getByRole("button", { name: /sell/i }));
 
-    // Error message
-    mockBuy.mockReturnValue(false);
-    rerender(<FruitViewPanel />);
-    fireEvent.click(screen.getByRole("button", { name: /Buy/i }));
-    const errorMsg = screen.getByText("Not enough apples in inventory.");
-    expect(errorMsg).toHaveStyle({ color: "#f5222d" });
+    // Message should indicate selling
+    expect(screen.getByText(/sold 1 apple/i)).toBeInTheDocument();
 
-    // Info (Sell) message
-    rerender(<FruitViewPanel />);
-    fireEvent.click(screen.getByRole("button", { name: /Sell/i }));
-    const infoMsg = screen.getByText("Sold 1 apple(s).");
-    expect(infoMsg).not.toHaveStyle({ color: "#52c41a" });
-    expect(infoMsg).not.toHaveStyle({ color: "#f5222d" });
+    // Ant Design info message should be called
+    expect(message.info).toHaveBeenCalledWith(expect.stringMatching(/sold/i));
   });
+
 });

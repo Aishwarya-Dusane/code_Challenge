@@ -1,5 +1,15 @@
 ## 💡 How much time did you spend on the engineering task?
-- 10Hours
+- 9Hours
+| Activity | Description | Time Spent |
+|-----------|--------------|-------------|
+| 📖 Code Walkthrough / Understanding | Reviewed project structure and understood existing component interactions before implementation. | 1 hr |
+| 🔼 React Upgrade | Upgraded project to **React 18** and resolved related compatibility issues. | 1.5 hrs |
+| 🧪 Unit Test Cases | Wrote and refactored **unit tests** for multiple components using Jest and Testing Library. | 2 hrs |
+| 🎨 Theme Issue Fix | Fixed theme rendering issue and ensured consistent dark/light mode behavior. | 1 hr |
+| 📏 Resizable Container | Fixed container **resizing behavior** for smooth drag and resize interaction. | 1.5 hrs |
+| 🪟 Z-Index Behavior | Fixed issue where **backside container** overlaps; now it comes to front on click (z-index solution). | 0.5 hr |
+| ⚙️ Constants Refactor | Created and organized a **constants file** for reusable messages and static values. | 0.75 hr |
+| 📝 Documentation | Created `answers.md` and added structured explanations for design and improvement points. | 0.75 hr |
 
 ## 💡 What I would add or improve if I had more time?
 

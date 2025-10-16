@@ -4,5 +4,5 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src"]
+  "include": ["src", "jest.config.js", "jest.setup.js"]
 }

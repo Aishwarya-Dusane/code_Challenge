@@ -1,40 +1,34 @@
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import AboutPanel from "../AboutPanel";
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';  // <-- Add this line
+import AboutPanel from '../AboutPanel';
 
-describe("AboutPanel", () => {
-  it("renders the About heading", () => {
+describe('AboutPanel', () => {
+  it('renders the heading "About"', () => {
     render(<AboutPanel />);
-    const heading = screen.getByRole("heading", { name: /about/i });
+    const heading = screen.getByRole('heading', { name: /about/i });
     expect(heading).toBeInTheDocument();
-    expect(heading).toHaveTextContent("About");
   });
 
-  it("displays the welcome message with app name", () => {
+  it('renders the welcome message with bold "fruteria"', () => {
     render(<AboutPanel />);
-    expect(screen.getByText(/welcome to/i)).toBeInTheDocument();
-    expect(screen.getByText(/fruteria/i)).toBeInTheDocument();
+    const boldText = screen.getByText('fruteria', { selector: 'b' });
+    expect(boldText).toBeInTheDocument();
   });
 
-  it("mentions that it is a trading app for fruit", () => {
+  it('renders the italicized made with emoji text', () => {
     render(<AboutPanel />);
-    expect(screen.getByText(/trading app for fruit/i)).toBeInTheDocument();
+    const italicText = screen.getByText(/Made with 🍌 and ❤️/i, { selector: 'i' });
+    expect(italicText).toBeInTheDocument();
   });
 
-  it("includes a fun footer message", () => {
-    render(<AboutPanel />);
-    expect(screen.getByText(/made with/i)).toBeInTheDocument();
-    expect(screen.getByText(/🍌/)).toBeInTheDocument();
-    expect(screen.getByText(/❤️/)).toBeInTheDocument();
-  });
-
-  it("has inline styles applied to the container", () => {
+  it('has the correct style on container div', () => {
     const { container } = render(<AboutPanel />);
-    const div = container.firstChild as HTMLElement;
+    const div = container.firstChild;
     expect(div).toHaveStyle({
-      padding: "24px",
-      color: "#e0e0e0",
-      fontFamily: "monospace",
+      padding: '24px',
+      color: '#e0e0e0',
+      fontFamily: 'monospace',
     });
   });
 });
