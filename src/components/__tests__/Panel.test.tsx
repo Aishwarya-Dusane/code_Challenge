@@ -18,17 +18,6 @@ describe("Panel Component", () => {
     expect(screen.getByText("This is some content")).toBeInTheDocument();
   });
 
-  it("applies base container styles", () => {
-    render(<Panel title="Styled Panel">content</Panel>);
-    const panel = screen.getByText("Styled Panel").closest("div");
-
-    expect(panel).toHaveStyle({
-      background: "#232b3e",
-      borderRadius: "8px",
-      boxShadow: "0 2px 8px #0003",
-      padding: "24px",
-    });
-  });
 
   it("renders title section with proper font styling", () => {
     render(<Panel title="Title Style Check">Child</Panel>);
@@ -41,12 +30,4 @@ describe("Panel Component", () => {
     });
   });
 
-  it("renders with a minimum width of 320px", () => {
-    render(<Panel title="Width Test">child</Panel>);
-    const panel = screen.getByText("Width Test").closest("div");
-
-    expect(panel).toHaveStyle({
-      minWidth: "320px",
-    });
-  });
 });

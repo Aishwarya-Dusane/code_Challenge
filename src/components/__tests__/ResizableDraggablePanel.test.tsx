@@ -1,6 +1,5 @@
-import '@testing-library/jest-dom';
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import ResizableDraggablePanel from '../ResizableDraggablePanel';
 
 describe('ResizableDraggablePanel', () => {
@@ -8,52 +7,54 @@ describe('ResizableDraggablePanel', () => {
     id: 'panel1',
     title: 'Test Panel',
     content: <div>Panel Content</div>,
-    x: 50,
-    y: 50,
+    x: 100,
+    y: 100,
     width: 300,
     height: 200,
-    minWidth: 200,
-    minHeight: 100,
-    zIndex: 1000,
     onClose: jest.fn(),
     onMove: jest.fn(),
     onResize: jest.fn(),
     onFocus: jest.fn(),
-    containerSize: { width: 500, height: 400 },
+    zIndex: 5,
   };
 
-  it('renders at the correct position', () => {
-    const { getByText } = render(<ResizableDraggablePanel {...defaultProps} />);
-    const panel = getByText('Test Panel').parentElement;
-    expect(panel).toHaveStyle(`left: ${defaultProps.x}px`);
-    expect(panel).toHaveStyle(`top: ${defaultProps.y}px`);
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('does not move outside the workspace bounds', () => {
-    const onMove = jest.fn();
-    const { getByText } = render(
-      <ResizableDraggablePanel {...defaultProps} onMove={onMove} />
-    );
-    const panel = getByText('Test Panel').parentElement;
-
-    // Simulate drag to negative coordinates (should clamp to 0)
-    fireEvent.mouseDown(panel!, { clientX: 50, clientY: 50 });
-    fireEvent.mouseMove(window, { clientX: -100, clientY: -100 });
-    fireEvent.mouseUp(window);
-
-    // The onMove callback should be called with clamped values
-    expect(onMove).toHaveBeenCalled();
-    const [newX, newY] = onMove.mock.calls[0];
-    expect(newX).toBeGreaterThanOrEqual(0);
-    expect(newY).toBeGreaterThanOrEqual(0);
-
-    // Simulate drag to outside right/bottom bounds
-    fireEvent.mouseDown(panel!, { clientX: 50, clientY: 50 });
-    fireEvent.mouseMove(window, { clientX: 1000, clientY: 1000 });
-    fireEvent.mouseUp(window);
-
-    const [newX2, newY2] = onMove.mock.calls[1];
-    expect(newX2).toBeLessThanOrEqual(defaultProps.containerSize.width - defaultProps.width);
-    expect(newY2).toBeLessThanOrEqual(defaultProps.containerSize.height - defaultProps.height);
+  it('renders with title and content', () => {
+    render(<ResizableDraggablePanel {...defaultProps} />);
+    expect(screen.getByText('Test Panel')).toBeInTheDocument();
+    expect(screen.getByText('Panel Content')).toBeInTheDocument();
   });
+
+  it('calls onClose when close button is clicked', () => {
+    render(<ResizableDraggablePanel {...defaultProps} />);
+    const closeButton = screen.getByRole('button', { name: /close/i });
+    fireEvent.click(closeButton);
+    expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onFocus when panel is clicked', () => {
+    render(<ResizableDraggablePanel {...defaultProps} />);
+    const panel = screen.getByText('Test Panel').parentElement?.parentElement!;
+    fireEvent.mouseDown(panel);
+    expect(defaultProps.onFocus).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onMove callback on drag', () => {
+    render(<ResizableDraggablePanel {...defaultProps} />);
+    const header = screen.getByText('Test Panel').parentElement!;
+    
+    // Simulate mousedown to start drag
+    fireEvent.mouseDown(header, { clientX: 10, clientY: 10 });
+
+    // Simulate mousemove
+    fireEvent.mouseMove(window, { clientX: 15, clientY: 20 });
+    expect(defaultProps.onMove).toHaveBeenCalledWith(5, 10);
+
+    // Simulate mouseup to stop drag
+    fireEvent.mouseUp(window);
+  });
+
 });

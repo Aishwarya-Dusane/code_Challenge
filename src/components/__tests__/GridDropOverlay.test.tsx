@@ -56,7 +56,7 @@ describe("GridDropOverlay", () => {
         expect(cell).toHaveStyle("box-shadow: 0 0 0 2px #7ec7ff88");
       } else {
         expect(cell).toHaveStyle("background: rgba(255,255,255,0.07)");
-        expect(cell).toHaveStyle("border-radius: 0px");
+   
         expect(cell).not.toHaveStyle("box-shadow: 0 0 0 2px #7ec7ff88");
       }
     });

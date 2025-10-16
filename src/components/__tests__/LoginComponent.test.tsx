@@ -1,65 +1,45 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import LoginComponent from "../LoginComponent";
 
 describe("LoginComponent", () => {
-  it("renders login title and form fields", () => {
+  it("renders login form with username, password and button", () => {
     render(<LoginComponent />);
-
-    // Title
-    expect(screen.getByText("Login")).toBeInTheDocument();
-
-    // Input fields
-    expect(screen.getByPlaceholderText("Enter your username")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Enter your password")).toBeInTheDocument();
-
-    // Button
+    expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
   });
 
-  it("shows error message for invalid credentials", async () => {
+  it("shows validation errors if username and password are empty", async () => {
     render(<LoginComponent />);
+    fireEvent.click(screen.getByRole("button", { name: /login/i }));
 
-    const usernameInput = screen.getByPlaceholderText("Enter your username");
-    const passwordInput = screen.getByPlaceholderText("Enter your password");
-    const submitButton = screen.getByRole("button", { name: /login/i });
-
-    // Enter wrong credentials
-    await userEvent.type(usernameInput, "wronguser");
-    await userEvent.type(passwordInput, "wrongpass");
-    fireEvent.click(submitButton);
-
-    // Expect error message
-    await waitFor(() =>
-      expect(screen.getByText("Invalid credentials")).toBeInTheDocument()
-    );
+    expect(await screen.findByText(/please input your username!/i)).toBeInTheDocument();
+    expect(await screen.findByText(/please input your password!/i)).toBeInTheDocument();
   });
 
-  it("calls onLoginSuccess for correct credentials", async () => {
-    const mockLoginSuccess = jest.fn();
-    render(<LoginComponent onLoginSuccess={mockLoginSuccess} />);
+  it("shows error message on invalid credentials", async () => {
+    render(<LoginComponent />);
 
-    const usernameInput = screen.getByPlaceholderText("Enter your username");
-    const passwordInput = screen.getByPlaceholderText("Enter your password");
-    const submitButton = screen.getByRole("button", { name: /login/i });
+    fireEvent.change(screen.getByLabelText(/username/i), { target: { value: "wronguser" } });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "wrongpass" } });
 
-    // Correct credentials
-    await userEvent.type(usernameInput, "admin");
-    await userEvent.type(passwordInput, "1234");
-    fireEvent.click(submitButton);
+    fireEvent.click(screen.getByRole("button", { name: /login/i }));
 
-    await waitFor(() => expect(mockLoginSuccess).toHaveBeenCalled());
+    expect(await screen.findByText(/invalid credentials/i)).toBeInTheDocument();
   });
 
-  it("does not show error message initially", () => {
-    render(<LoginComponent />);
-    expect(screen.queryByText("Invalid credentials")).not.toBeInTheDocument();
-  });
+  it("calls onLoginSuccess on valid credentials", async () => {
+    const onLoginSuccess = jest.fn();
+    render(<LoginComponent onLoginSuccess={onLoginSuccess} />);
 
-  it("renders the login container with correct background", () => {
-    render(<LoginComponent />);
-    const container = screen.getByTestId("login-component");
-    expect(container).toHaveStyle("background: #232b3e");
+    fireEvent.change(screen.getByLabelText(/username/i), { target: { value: "admin" } });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "1234" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+
+    await waitFor(() => {
+      expect(onLoginSuccess).toHaveBeenCalledTimes(1);
+    });
   });
 });

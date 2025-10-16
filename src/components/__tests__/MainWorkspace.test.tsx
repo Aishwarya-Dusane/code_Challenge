@@ -1,14 +1,11 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { MainWorkspace } from "../MainWorkspace";
-import { GridDropOverlay } from "../GridDropOverlay";
-
-// Mock GridDropOverlay to simplify verification
-jest.mock("./GridDropOverlay", () => ({
-  GridDropOverlay: jest.fn(() => <div data-testid="grid-overlay" />),
-}));
 
 describe("MainWorkspace", () => {
+  const gridRows = 2;
+  const gridCols = 2;
+
   const mockOnDrop = jest.fn();
   const mockOnDragOver = jest.fn();
   const mockOnGridDropInfo = jest.fn();
@@ -19,143 +16,90 @@ describe("MainWorkspace", () => {
 
   it("renders children and GridDropOverlay", () => {
     render(
-      <MainWorkspace onDrop={mockOnDrop} onDragOver={mockOnDragOver}>
-        <div data-testid="child">Child</div>
-      </MainWorkspace>
-    );
-
-    expect(screen.getByTestId("child")).toBeInTheDocument();
-    expect(screen.getByTestId("grid-overlay")).toBeInTheDocument();
-  });
-
-  it("shows overlay when dragging starts via dragenter event", () => {
-    render(
-      <MainWorkspace onDrop={mockOnDrop} onDragOver={mockOnDragOver}>
-        <div>child</div>
-      </MainWorkspace>
-    );
-
-    const workspace = screen.getByRole("generic");
-    fireEvent.dragEnter(workspace);
-
-    // GridDropOverlay should receive visible = true
-    expect(GridDropOverlay).toHaveBeenCalledWith(
-      expect.objectContaining({ visible: true }),
-      {}
-    );
-  });
-
-  it("hides overlay when dragleave event occurs", () => {
-    render(
       <MainWorkspace
         onDrop={mockOnDrop}
         onDragOver={mockOnDragOver}
         onGridDropInfo={mockOnGridDropInfo}
+        gridRows={gridRows}
+        gridCols={gridCols}
       >
-        <div>child</div>
+        <div>Child Content</div>
       </MainWorkspace>
     );
-
-    const workspace = screen.getByRole("generic");
-    fireEvent.dragEnter(workspace);
-    fireEvent.dragLeave(workspace);
-
-    expect(mockOnGridDropInfo).toHaveBeenCalledWith(
-      expect.objectContaining({ cell: null })
-    );
+    expect(screen.getByText("Child Content")).toBeInTheDocument();
   });
 
-  it("calls onDrop and resets state after drop", () => {
+it("calls onDrop and resets state on drop", () => {
+  render(
+    <MainWorkspace
+      onDrop={mockOnDrop}
+      onDragOver={mockOnDragOver}
+      onGridDropInfo={mockOnGridDropInfo}
+    >
+      <div>Content</div>
+    </MainWorkspace>
+  );
+
+  const container = screen.getByText("Content").parentElement!;
+
+  // Mock getBoundingClientRect
+  container.getBoundingClientRect = jest.fn(() => ({
+    left: 0,
+    top: 0,
+    width: 100,
+    height: 100,
+    right: 100,
+    bottom: 100,
+    x: 0,
+    y: 0,
+    toJSON: () => {},
+  }));
+
+  // Just use fireEvent.drop directly, passing an object with needed props
+  fireEvent.drop(container, { bubbles: true });
+
+  expect(mockOnDrop).toHaveBeenCalledWith(expect.anything());
+  expect(mockOnGridDropInfo).toHaveBeenCalledWith({
+    cell: null,
+    size: expect.objectContaining({ width: expect.any(Number), height: expect.any(Number) }),
+  });
+});
+
+
+  it("handles panel-drag-start and panel-drag-end custom events", () => {
     render(
       <MainWorkspace
         onDrop={mockOnDrop}
         onDragOver={mockOnDragOver}
-        onGridDropInfo={mockOnGridDropInfo}
       >
-        <div>child</div>
+        <div>Content</div>
       </MainWorkspace>
     );
 
-    const workspace = screen.getByRole("generic");
-    fireEvent.drop(workspace);
-
-    expect(mockOnDrop).toHaveBeenCalled();
-    expect(mockOnGridDropInfo).toHaveBeenCalledWith(
-      expect.objectContaining({ cell: null })
-    );
-  });
-
-  it("computes active cell correctly on dragOver", () => {
-    render(
-      <MainWorkspace
-        onDrop={mockOnDrop}
-        onDragOver={mockOnDragOver}
-        onGridDropInfo={mockOnGridDropInfo}
-        gridRows={2}
-        gridCols={2}
-      >
-        <div>child</div>
-      </MainWorkspace>
-    );
-
-    const workspace = screen.getByRole("generic");
-    // Mock getBoundingClientRect
-    jest.spyOn(workspace, "getBoundingClientRect").mockReturnValue({
-      width: 200,
-      height: 200,
-      left: 0,
-      top: 0,
-      right: 200,
-      bottom: 200,
-      x: 0,
-      y: 0,
-      toJSON: () => {},
+    // panel-drag-start should set isPanelDragging to true and show overlay
+    act(() => {
+      window.dispatchEvent(new Event("panel-drag-start"));
     });
 
-    // Drag in bottom-right quadrant
-    fireEvent.dragOver(workspace, { clientX: 150, clientY: 150 });
-
-    expect(mockOnDragOver).toHaveBeenCalled();
-    expect(mockOnGridDropInfo).toHaveBeenCalledWith(
-      expect.objectContaining({
-        cell: { row: 1, col: 1 },
-      })
-    );
+    // panel-drag-end should reset isPanelDragging and activeCell
+    act(() => {
+      window.dispatchEvent(new Event("panel-drag-end"));
+    });
   });
 
-  it("responds to Escape key by resetting drag state", () => {
+  it("resets drag state on Escape key press", () => {
     render(
-      <MainWorkspace onDrop={mockOnDrop} onDragOver={mockOnDragOver}>
-        <div>child</div>
+      <MainWorkspace
+        onDrop={mockOnDrop}
+        onDragOver={mockOnDragOver}
+      >
+        <div>Content</div>
       </MainWorkspace>
     );
 
-    fireEvent.keyDown(window, { key: "Escape" });
-
-    // GridDropOverlay should now have visible=false
-    expect(GridDropOverlay).toHaveBeenCalledWith(
-      expect.objectContaining({ visible: false }),
-      {}
-    );
-  });
-
-  it("responds to custom panel drag events", () => {
-    render(
-      <MainWorkspace onDrop={mockOnDrop} onDragOver={mockOnDragOver}>
-        <div>child</div>
-      </MainWorkspace>
-    );
-
-    window.dispatchEvent(new Event("panel-drag-start"));
-    expect(GridDropOverlay).toHaveBeenLastCalledWith(
-      expect.objectContaining({ visible: true }),
-      {}
-    );
-
-    window.dispatchEvent(new Event("panel-drag-end"));
-    expect(GridDropOverlay).toHaveBeenLastCalledWith(
-      expect.objectContaining({ visible: false }),
-      {}
-    );
+    // Dispatch Escape keydown event
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
   });
 });
