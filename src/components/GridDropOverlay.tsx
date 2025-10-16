@@ -43,6 +43,7 @@ export const GridDropOverlay: React.FC<GridDropOverlayProps> = ({
         return (
           <div
             key={idx}
+            role="gridcell"
             style={{
               border: "2.5px dashed #7ec7ff",
               background: isActive ? "rgba(126,199,255,0.32)" : "rgba(255,255,255,0.07)",

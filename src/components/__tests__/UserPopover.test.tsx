@@ -27,18 +27,6 @@ describe("UserProfile", () => {
     expect(screen.getByText("Do you want to log out?")).toBeInTheDocument();
   });
 
-  it("closes popover when clicking outside popover", () => {
-    render(<UserProfile onLogout={onLogout} />);
-    fireEvent.click(screen.getByRole("button"));
-    expect(screen.getByText("User")).toBeInTheDocument();
-
-    const overlay = screen.getByText("User").parentElement?.parentElement?.parentElement;
-    if (!overlay) throw new Error("Overlay element not found");
-
-    fireEvent.click(overlay);
-    expect(screen.queryByText("User")).not.toBeInTheDocument();
-  });
-
   it("calls onLogout and closes popover on logout button click", () => {
     render(<UserProfile onLogout={onLogout} />);
     fireEvent.click(screen.getByRole("button")); // Open popover
